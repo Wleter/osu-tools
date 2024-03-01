@@ -39,7 +39,6 @@ namespace PerformanceCalculatorGUI.LocalCalculator
                 return;
 
             if (newMaxHitObjectDiff > maxHitObjectDiff)
-
             {
                 effHitObjectCount = effHitObjectCount * Math.Pow(maxHitObjectDiff / newMaxHitObjectDiff, CountDecay) + 1;
                 maxHitObjectDiff = newMaxHitObjectDiff;
