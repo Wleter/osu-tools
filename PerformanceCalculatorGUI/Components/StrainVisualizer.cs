@@ -20,6 +20,7 @@ using osu.Game.Rulesets.Difficulty.Skills;
 using osu.Game.Screens.Edit.Compose.Components.Timeline;
 using osuTK;
 using PerformanceCalculatorGUI.Components.TextBoxes;
+using PerformanceCalculatorGUI.LocalCalculator;
 
 namespace PerformanceCalculatorGUI.Components
 {
@@ -97,7 +98,7 @@ namespace PerformanceCalculatorGUI.Components
         {
             graphsContainer.Clear();
 
-            var skills = val.NewValue.Where(x => x is StrainSkill).ToArray();
+            var skills = val.NewValue.Where(x => x is WrappedSkill).ToArray();
 
             // dont bother if there are no strain skills to draw
             if (skills.Length == 0)
@@ -113,11 +114,10 @@ namespace PerformanceCalculatorGUI.Components
 
             foreach (var skill in skills)
             {
-                var strains = ((StrainSkill)skill).GetCurrentStrainPeaks().ToArray();
-
                 var skillStrainList = new List<(float val, string tooltip)>();
 
-                for (int i = 0; i < strains.Length; i++)
+                var strains = ((WrappedSkill)skill).StrainValues;
+                for (int i = 0; i < strains.Count; i++)
                 {
                     var strain = strains[i];
                     var strainTime = TimeSpan.FromMilliseconds(TimeUntilFirstStrain.Value + i * 400); // 400 is strain length in StrainSkill
@@ -200,7 +200,7 @@ namespace PerformanceCalculatorGUI.Components
                                 RelativeSizeAxes = Axes.None,
                                 Width = 200,
                                 Current = { BindTarget = graphToggleBindable, Default = true, Value = true },
-                                LabelText = skills[i].GetType().Name,
+                                LabelText = ((WrappedSkill)skills[i]).Name,
                                 TextColour = skillColours[i]
                             }
                         }
