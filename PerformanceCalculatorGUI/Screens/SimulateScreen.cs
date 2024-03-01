@@ -355,8 +355,14 @@ namespace PerformanceCalculatorGUI.Screens
                                                     Scale = new Vector2(mod_selection_container_scale),
                                                     IsValidMod = mod => mod.HasImplementation && ModUtils.FlattenMod(mod).All(m => m.UserPlayable),
                                                     SelectedMods = { BindTarget = appliedMods }
+                                                },
+                                                new SwitchButton
+                                                {
+
+                                                    Width = 80,
+                                                    Height = 40
                                                 }
-                                            }
+                                }
                                         }
                                     },
                                     new OsuScrollContainer(Direction.Vertical)

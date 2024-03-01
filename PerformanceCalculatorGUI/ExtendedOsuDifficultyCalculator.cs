@@ -9,6 +9,8 @@ using osu.Game.Rulesets.Difficulty.Preprocessing;
 using osu.Game.Rulesets.Difficulty.Skills;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu.Difficulty;
+using osu.Game.Rulesets.Osu.Difficulty.Skills;
+using PerformanceCalculatorGUI.LocalCalculator;
 
 namespace PerformanceCalculatorGUI;
 
@@ -28,5 +30,16 @@ public class ExtendedOsuDifficultyCalculator : OsuDifficultyCalculator, IExtende
     {
         this.skills = skills;
         return base.CreateDifficultyAttributes(beatmap, mods, skills, clockRate);
+    }
+
+    protected override Skill[] CreateSkills(IBeatmap beatmap, Mod[] mods, double clockRate)
+    {
+        return new Skill[]
+        {
+            new WrappedSkill(new Aim(mods, true), mods),
+            new WrappedSkill(new Aim(mods, false), mods),
+            new WrappedSkill(new Speed(mods), mods),
+            new WrappedSkill(new Flashlight(mods), mods)
+        };
     }
 }
