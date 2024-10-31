@@ -10,17 +10,17 @@ namespace PerformanceCalculatorGUI.LocalCalculator
 {
     public class WrappedSkill : Skill
     {
-        private Skill skill;
+        public Skill Skill { get; }
 
         private List<double> strainValues = new List<double>();
         public IReadOnlyList<double> StrainValues => strainValues;
+        public string Name { get; }
 
-        public string Name => skill.GetType().Name;
-
-        public WrappedSkill(Skill skill, Mod[] mods)
+        public WrappedSkill(Skill skill, Mod[] mods, string name)
             : base(mods)
         {
-            this.skill = skill;
+            Skill = skill;
+            Name = name;
         }
 
         protected WrappedSkill(Mod[] mods)
@@ -28,14 +28,14 @@ namespace PerformanceCalculatorGUI.LocalCalculator
         {
         }
 
-        public override double DifficultyValue() => skill.DifficultyValue();
+        public override double DifficultyValue() => Skill.DifficultyValue();
 
-        public override double EffNoteCount() => skill.EffNoteCount();
+        public override double EffNoteCount() => Skill.EffNoteCount();
 
         public override void Process(DifficultyHitObject current)
         {
-            skill.Process(current);
-            strainValues.Add(skill.DifficultyValue());
+            Skill.Process(current);
+            strainValues.Add(Skill.DifficultyValue());
         }
     }
 }
