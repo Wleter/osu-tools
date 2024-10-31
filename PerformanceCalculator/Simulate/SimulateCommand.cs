@@ -4,12 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Linq;
 using JetBrains.Annotations;
 using McMaster.Extensions.CommandLineUtils;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
+using osu.Game.Screens.Play.Break;
 
 namespace PerformanceCalculator.Simulate
 {
@@ -59,6 +62,8 @@ namespace PerformanceCalculator.Simulate
 
         public override void Execute()
         {
+            var watch = Stopwatch.StartNew();
+
             var ruleset = Ruleset;
 
             var workingBeatmap = ProcessorWorkingBeatmap.FromFileOrId(Beatmap);
@@ -75,10 +80,19 @@ namespace PerformanceCalculator.Simulate
                 Mods = mods
             };
 
+            watch.Stop();
+            var elapsed = watch.ElapsedMilliseconds;
+            Console.WriteLine($"Beatmap loading {elapsed}");
+            watch = Stopwatch.StartNew();
+
             var difficultyCalculator = ruleset.CreateDifficultyCalculator(workingBeatmap);
             var difficultyAttributes = difficultyCalculator.Calculate(mods);
             var performanceCalculator = ruleset.CreatePerformanceCalculator();
             var performanceAttributes = performanceCalculator?.Calculate(scoreInfo, difficultyAttributes);
+
+            watch.Stop();
+            elapsed = watch.ElapsedMilliseconds;
+            Console.WriteLine($"difficulty & performance calculation {elapsed}");
 
             OutputPerformance(scoreInfo, performanceAttributes, difficultyAttributes);
         }

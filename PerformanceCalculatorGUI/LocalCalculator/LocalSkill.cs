@@ -10,9 +10,9 @@ namespace PerformanceCalculatorGUI.LocalCalculator
 {
     public abstract class LocalSkill : Skill
     {
-        public required double CountFactor { get; init; }
-        public required double DiffMultiplicative { get; init; }
-        public required double CountDecay { get; init; }
+        public required double CountFactor { get; set; }
+        public required double DiffMultiplicative { get; set; }
+        public required double CountDecay { get; set; }
 
         private double maxHitObjectDiff = 0;
         private double effHitObjectCount = 0;
@@ -39,6 +39,7 @@ namespace PerformanceCalculatorGUI.LocalCalculator
                 return;
 
             if (newMaxHitObjectDiff > maxHitObjectDiff)
+
             {
                 effHitObjectCount = effHitObjectCount * Math.Pow(maxHitObjectDiff / newMaxHitObjectDiff, CountDecay) + 1;
                 maxHitObjectDiff = newMaxHitObjectDiff;

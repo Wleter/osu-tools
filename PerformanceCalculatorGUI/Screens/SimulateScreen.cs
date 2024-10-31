@@ -37,7 +37,9 @@ using osuTK;
 using PerformanceCalculatorGUI.Components;
 using PerformanceCalculatorGUI.Components.TextBoxes;
 using PerformanceCalculatorGUI.Configuration;
+using PerformanceCalculatorGUI.LocalCalculator;
 using PerformanceCalculatorGUI.Screens.ObjectInspection;
+using Vulkan;
 
 namespace PerformanceCalculatorGUI.Screens
 {
@@ -79,6 +81,9 @@ namespace PerformanceCalculatorGUI.Screens
 
         private ModDisplay modDisplay;
 
+        private SwitchButton ppAlgorithmSwitch;
+
+        private FillFlowContainer localSkillsContainer;
         private StrainVisualizer strainVisualizer;
 
         private ObjectInspector objectInspector;
@@ -109,6 +114,13 @@ namespace PerformanceCalculatorGUI.Screens
         private OverlayColourProvider colourProvider = new OverlayColourProvider(OverlayColourScheme.Blue);
 
         public override bool ShouldShowConfirmationDialogOnSwitch => working != null;
+
+        private LabelledEnumDropdown<SkillType> skillChooser;
+        private LimitedLabelledFractionalNumberBox skillMultiplier;
+        private LimitedLabelledFractionalNumberBox strainDecayBase;
+        private LimitedLabelledFractionalNumberBox countDecay;
+        private LimitedLabelledFractionalNumberBox countFactor;
+        private LimitedLabelledFractionalNumberBox diffMultiplicative;
 
         private const int file_selection_container_height = 40;
         private const int map_title_container_height = 40;
@@ -356,13 +368,79 @@ namespace PerformanceCalculatorGUI.Screens
                                                     IsValidMod = mod => mod.HasImplementation && ModUtils.FlattenMod(mod).All(m => m.UserPlayable),
                                                     SelectedMods = { BindTarget = appliedMods }
                                                 },
-                                                new SwitchButton
+                                                new OsuSpriteText
                                                 {
-
+                                                    Margin = new MarginPadding(10.0f),
+                                                    Origin = Anchor.TopLeft,
+                                                    Height = 20,
+                                                    Text = "Local skills"
+                                                },
+                                                ppAlgorithmSwitch = new SwitchButton
+                                                {
                                                     Width = 80,
                                                     Height = 40
-                                                }
-                                }
+                                                },
+                                                localSkillsContainer = new FillFlowContainer
+                                                {
+                                                    Direction = FillDirection.Vertical,
+                                                    RelativeSizeAxes = Axes.X,
+                                                    Anchor = Anchor.TopLeft,
+                                                    AutoSizeAxes = Axes.Y,
+
+                                                    Children = new Drawable[]
+                                                    {
+                                                        skillChooser = new LabelledEnumDropdown<SkillType>
+                                                        {
+                                                            RelativeSizeAxes = Axes.X,
+                                                            Anchor = Anchor.TopLeft,
+                                                            Label = "Skills",
+                                                            Items = Enum.GetValues<SkillType>()
+                                                        },
+
+                                                        skillMultiplier = new LimitedLabelledFractionalNumberBox
+                                                        {
+                                                            RelativeSizeAxes = Axes.X,
+                                                            Anchor = Anchor.TopLeft,
+                                                            Label = "Skill Multiplier",
+                                                            MaxValue = 100.0,
+                                                            MinValue = 0.0,
+                                                        },
+                                                        strainDecayBase = new LimitedLabelledFractionalNumberBox
+                                                        {
+                                                            RelativeSizeAxes = Axes.X,
+                                                            Anchor = Anchor.TopLeft,
+                                                            Label = "strain decay base",
+                                                            MaxValue = 100.0,
+                                                            MinValue = 0.0,
+                                                        },
+                                                        countDecay = new LimitedLabelledFractionalNumberBox
+                                                        {
+                                                            RelativeSizeAxes = Axes.X,
+                                                            Anchor = Anchor.TopLeft,
+                                                            Label = "count decay",
+                                                            MaxValue = 100.0,
+                                                            MinValue = 0.0,
+                                                        },
+                                                        countFactor = new LimitedLabelledFractionalNumberBox
+                                                        {
+                                                            RelativeSizeAxes = Axes.X,
+                                                            Anchor = Anchor.TopLeft,
+                                                            Label = "count factor",
+                                                            MaxValue = 100.0,
+                                                            MinValue = 0.0,
+                                                        },
+                                                        diffMultiplicative = new LimitedLabelledFractionalNumberBox
+                                                        {
+                                                            RelativeSizeAxes = Axes.X,
+                                                            Anchor = Anchor.TopLeft,
+                                                            Label = "difficulty multiplicative",
+                                                            MaxValue = 100.0,
+                                                            MinValue = 0.0,
+                                                        },
+
+                                                    }
+                                                },
+                                            }
                                         }
                                     },
                                     new OsuScrollContainer(Direction.Vertical)
@@ -483,6 +561,74 @@ namespace PerformanceCalculatorGUI.Screens
 
                     fixupTextBox(beatmapIdTextBox);
                 }
+            });
+
+            ppAlgorithmSwitch.Current.BindValueChanged(val => {
+                switchCalculations(val.NewValue);
+                if (val.NewValue)
+                {
+                    var skill = getSkillParams(skillChooser.Current.Value);
+
+                    skillMultiplier.PlaceholderText = skill.SkillMultiplier.ToString();
+                    strainDecayBase.PlaceholderText = skill.StrainDecayBase.ToString();
+                    countDecay.PlaceholderText = skill.CountDecay.ToString();
+                    countFactor.PlaceholderText = skill.CountFactor.ToString();
+                    diffMultiplicative.PlaceholderText = skill.DiffMultiplicative.ToString();
+
+                    localSkillsContainer.Show();
+                }
+                else
+                    localSkillsContainer.Hide();
+            });
+            localSkillsContainer.Hide();
+
+            skillChooser.Current.BindValueChanged(val =>
+            {
+                var skill = getSkillParams(val.NewValue);
+                if (skill != null)
+                {
+                    skillMultiplier.Current.Value = skill.SkillMultiplier.ToString();
+                    strainDecayBase.Current.Value = skill.StrainDecayBase.ToString();
+                    countDecay.Current.Value = skill.CountDecay.ToString();
+                    countFactor.Current.Value = skill.CountFactor.ToString();
+                    diffMultiplicative.Current.Value = skill.DiffMultiplicative.ToString();
+                }
+            });
+
+            skillMultiplier.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.SkillMultiplier = val.NewValue;
+
+                debouncedRecalculate();
+            });
+            strainDecayBase.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.StrainDecayBase = val.NewValue;
+
+                debouncedRecalculate();
+            });
+            countDecay.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.CountDecay = val.NewValue;
+
+                debouncedRecalculate();
+            });
+            countFactor.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.CountFactor = val.NewValue;
+
+                debouncedRecalculate();
+            });
+            diffMultiplicative.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.DiffMultiplicative = val.NewValue;
+
+                debouncedRecalculate();
             });
 
             accuracyTextBox.Value.BindValueChanged(_ => debouncedCalculatePerformance());
@@ -636,9 +782,8 @@ namespace PerformanceCalculatorGUI.Screens
             if (working is null)
                 return;
 
-            var rulesetInstance = ruleset.Value.CreateInstance();
             difficultyCalculator.Value = RulesetHelper.GetExtendedDifficultyCalculator(ruleset.Value, working);
-            performanceCalculator = rulesetInstance.CreatePerformanceCalculator();
+            performanceCalculator = RulesetHelper.GetExtendedPerformanceCalculator(ruleset.Value);
         }
 
         private void calculateDifficulty()
@@ -681,6 +826,32 @@ namespace PerformanceCalculatorGUI.Screens
         {
             debouncedPerformanceUpdate?.Cancel();
             debouncedPerformanceUpdate = Scheduler.AddDelayed(calculatePerformance, 20);
+        }
+
+        private void debouncedRecalculate()
+        {
+            debouncedPerformanceUpdate?.Cancel();
+            debouncedPerformanceUpdate = Scheduler.AddDelayed(recalculate, 20);
+        }
+
+        private void recalculate()
+        {
+            calculateDifficulty();
+            calculatePerformance();
+            updateGraph();
+        }
+
+        private void updateGraph()
+        {
+            if (difficultyCalculator.Value is IExtendedDifficultyCalculator extendedDifficultyCalculator)
+            {
+                strainVisualizer.Skills.Value = extendedDifficultyCalculator.GetSkills();
+                strainVisualizer.Skills.TriggerChange();
+            }
+            else
+            {
+                strainVisualizer.Skills.Value = Array.Empty<Skill>();
+            }
         }
 
         private void calculatePerformance()
@@ -893,6 +1064,27 @@ namespace PerformanceCalculatorGUI.Screens
             calculateDifficulty();
             calculatePerformance();
             populateScoreParams();
+        }
+
+        private void switchCalculations(bool withLocalSkills)
+        {
+            if (difficultyCalculator.Value is ExtendedOsuDifficultyCalculator extendedOsuDifficultyCalculator)
+                extendedOsuDifficultyCalculator.WithLocalSkills = withLocalSkills;
+
+            if (performanceCalculator is ExtendedOsuPerformanceCalculator extendedOsuPerformanceCalculator)
+                extendedOsuPerformanceCalculator.WithLocalSkills = withLocalSkills;
+
+            calculateDifficulty();
+            calculatePerformance();
+            populateScoreParams();
+        }
+
+        private SkillParams getSkillParams(SkillType type)
+        {
+            if (difficultyCalculator.Value is ExtendedOsuDifficultyCalculator calculator && ppAlgorithmSwitch.Current.Value)
+                return calculator.LocalSkillParams[(int)type];
+
+            return null;
         }
 
         // This is to make sure combo resets when classic mod is applied
