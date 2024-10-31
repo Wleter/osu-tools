@@ -631,6 +631,74 @@ namespace PerformanceCalculatorGUI.Screens
                 debouncedRecalculate();
             });
 
+            ppAlgorithmSwitch.Current.BindValueChanged(val => {
+                switchCalculations(val.NewValue);
+                if (val.NewValue)
+                {
+                    var skill = getSkillParams(skillChooser.Current.Value);
+
+                    skillMultiplier.PlaceholderText = skill.SkillMultiplier.ToString();
+                    strainDecayBase.PlaceholderText = skill.StrainDecayBase.ToString();
+                    countDecay.PlaceholderText = skill.CountDecay.ToString();
+                    countFactor.PlaceholderText = skill.CountFactor.ToString();
+                    diffMultiplicative.PlaceholderText = skill.DiffMultiplicative.ToString();
+
+                    localSkillsContainer.Show();
+                }
+                else
+                    localSkillsContainer.Hide();
+            });
+            localSkillsContainer.Hide();
+
+            skillChooser.Current.BindValueChanged(val =>
+            {
+                var skill = getSkillParams(val.NewValue);
+                if (skill != null)
+                {
+                    skillMultiplier.Current.Value = skill.SkillMultiplier.ToString();
+                    strainDecayBase.Current.Value = skill.StrainDecayBase.ToString();
+                    countDecay.Current.Value = skill.CountDecay.ToString();
+                    countFactor.Current.Value = skill.CountFactor.ToString();
+                    diffMultiplicative.Current.Value = skill.DiffMultiplicative.ToString();
+                }
+            });
+
+            skillMultiplier.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.SkillMultiplier = val.NewValue;
+
+                debouncedRecalculate();
+            });
+            strainDecayBase.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.StrainDecayBase = val.NewValue;
+
+                debouncedRecalculate();
+            });
+            countDecay.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.CountDecay = val.NewValue;
+
+                debouncedRecalculate();
+            });
+            countFactor.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.CountFactor = val.NewValue;
+
+                debouncedRecalculate();
+            });
+            diffMultiplicative.Value.BindValueChanged(val => {
+                var skill = getSkillParams(skillChooser.Current.Value);
+                if (skill != null)
+                    skill.DiffMultiplicative = val.NewValue;
+
+                debouncedRecalculate();
+            });
+
             accuracyTextBox.Value.BindValueChanged(_ => debouncedCalculatePerformance());
             goodsTextBox.Value.BindValueChanged(_ => debouncedCalculatePerformance());
             mehsTextBox.Value.BindValueChanged(_ => debouncedCalculatePerformance());
