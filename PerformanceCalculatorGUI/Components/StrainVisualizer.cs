@@ -69,6 +69,54 @@ namespace PerformanceCalculatorGUI.Components
             addStrainBars(skills, strainLists);
             addTooltipBars(strainLists);
 
+<<<<<<< HEAD
+=======
+            List<(float val, string tooltip)[]> strainLists = new List<(float val, string tooltip)[]>();
+
+            foreach (var skill in skills)
+            {
+                var skillStrainList = new List<(float val, string tooltip)>();
+
+                var strains = ((WrappedSkill)skill).StrainValues;
+                for (int i = 0; i < strains.Count; i++)
+                {
+                    var strain = strains[i];
+                    var strainTime = TimeSpan.FromMilliseconds(TimeUntilFirstStrain.Value + i * 400); // 400 is strain length in StrainSkill
+                    var tooltipText = $"~{strainTime:mm\\:ss\\.ff}";
+                    skillStrainList.Add(((float)strain, tooltipText));
+                }
+
+                strainLists.Add(skillStrainList.ToArray());
+            }
+
+            var strainMaxValue = strainLists.Max(list => list.Max(x => x.val));
+
+            for (int i = 0; i < skills.Length; i++)
+            {
+                graphsContainer.AddRange(new Drawable[]
+                {
+                    new BufferedContainer(cachedFrameBuffer: true)
+                    {
+                        RelativeSizeAxes = Axes.Both,
+                        Alpha = graphAlpha,
+                        Colour = skillColours[i],
+                        Child = new StrainBarGraph
+                        {
+                            RelativeSizeAxes = Axes.Both,
+                            MaxValue = strainMaxValue,
+                            Values = strainLists[i]
+                        }
+                    }
+                });
+            }
+
+            graphsContainer.Add(new OsuSpriteText
+            {
+                Font = OsuFont.GetFont(size: 10),
+                Text = $"{strainMaxValue:0.00}"
+            });
+
+>>>>>>> 4ed03f40b9412a610f28ae21b437b818e46e7fc4
             if (val.OldValue == null || val.NewValue.Length != val.OldValue.Length)
             {
                 // skill list changed - recreate toggles
