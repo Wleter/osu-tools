@@ -10,13 +10,16 @@ using osu.Framework.Graphics.Textures;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Catch;
+using osu.Game.Rulesets.Catch.Difficulty;
 using osu.Game.Rulesets.Catch.Objects;
 using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Mania;
+using osu.Game.Rulesets.Mania.Difficulty;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Rulesets.Taiko;
+using osu.Game.Rulesets.Taiko.Difficulty;
 using osu.Game.Rulesets.Taiko.Objects;
 using osu.Game.Skinning;
 using osu.Game.Utils;
@@ -74,6 +77,16 @@ namespace PerformanceCalculatorGUI
                 _ => ruleset.CreateInstance().CreateDifficultyCalculator(working)
             };
         }
+
+        public static PerformanceCalculator GetExtendedPerformanceCalculator(RulesetInfo ruleset)
+        {
+            return ruleset.OnlineID switch
+            {
+                0 => new ExtendedOsuPerformanceCalculator(),
+                _ => ruleset.CreateInstance().CreatePerformanceCalculator()
+            };
+        }
+
 
         public static Ruleset GetRulesetFromLegacyID(int id)
         {
